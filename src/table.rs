@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::alloc::{handle_alloc_error, Alloc, Global, Layout, LayoutErr};
+use std::alloc::{handle_alloc_error, Allocator, Global, Layout, LayoutErr};
 use std::collections::TryReserveError;
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::marker;
@@ -695,7 +695,7 @@ impl<K, V> RawTable<K, V> {
         // point into it.
         let (layout, _) = calculate_layout::<K, V>(capacity)?;
         let buffer = Global
-            .alloc(layout)
+            .allocate(layout)
             .map_err(|e| match fallibility {
                 Infallible => handle_alloc_error(layout),
                 Fallible => e,
@@ -1134,7 +1134,7 @@ unsafe impl<#[may_dangle] K, #[may_dangle] V> Drop for RawTable<K, V> {
 
         let (layout, _) = calculate_layout::<K, V>(self.capacity()).unwrap();
         unsafe {
-            Global.dealloc(NonNull::new_unchecked(self.hashes.ptr()).cast(), layout);
+            Global.deallocate(NonNull::new_unchecked(self.hashes.ptr()).cast(), layout);
             // Remember how everything was allocated out of one buffer
             // during initialization? We only need one call to free here.
         }
